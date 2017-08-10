@@ -3,9 +3,9 @@
 | Author | Chris Crawford <chris.crawford@relayr.io> |
 |:------------|:------------------------------------|
 
-#####IoT data usage by 2018 is expected to reach 403ZBs.  Companies looking to leverage IoT data analytics will need to rethink their data center infrastructures and strategies.  
+##### IoT data usage by 2018 is expected to reach 403ZBs.  Companies looking to leverage IoT data analytics will need to rethink their data center infrastructures and strategies.  
 
-#####Leveraging [Google Cloud Platform (GCP)] [7] and [relayr.io] [8] we will highlight the impact that IoT sensor data can have and how we can create Pipelines to reduce the data.
+##### Leveraging [Google Cloud Platform (GCP)][7] and [relayr.io][8] we will highlight the impact that IoT sensor data can have and how we can create Pipelines to reduce the data.
 
 #####This example is broken down into the following steps.
 
@@ -18,15 +18,15 @@
 
 ## Source
 
-#####On [developer.relayr.io] (https://developer.relayr.io) we have a device model with the following readings:
+##### On [developer.relayr.io] (https://developer.relayr.io) we have a device model with the following readings:
 
 * Pipe Temperature
 * Tank Pressure
 * Point Level
 
-#####Leveraging [Google Cloud Platform] [7] we have deployed a simple Node.js application that poles the devices [readings] (https://docs.relayr.io/api/cloud/devices/#last-data-received-from-device) and publishes the data to to a Cloud Pub/Sub topic.  
+##### Leveraging [Google Cloud Platform][7] we have deployed a simple Node.js application that poles the devices [readings] (https://docs.relayr.io/api/cloud/devices/#last-data-received-from-device) and publishes the data to to a Cloud Pub/Sub topic.  
 
-#####This example assumes that the Pub/Sub topic exists and that for this streaming dataset it is [projects/relayr-pubsub/topics/sensordata] [6]	
+##### This example assumes that the Pub/Sub topic exists and that for this streaming dataset it is [projects/relayr-pubsub/topics/sensordata][6]	
 
 
 
@@ -38,9 +38,9 @@
 
 ## Extract & Transform
 
-#####The following high-level diagram outlines the dataflow pipeline that will process the data stream that is available as a Cloud Pub/Sub topic and then write it to a BigQuery output for additional analytics.
+##### The following high-level diagram outlines the dataflow pipeline that will process the data stream that is available as a Cloud Pub/Sub topic and then write it to a BigQuery output for additional analytics.
 
-#####This example is based off of the [StreamingWordExtract] [5] which leverages the [common classes] [4] for setup and tear down of GCP resources.  
+##### This example is based off of the [StreamingWordExtract][5] which leverages the [common classes][4] for setup and tear down of GCP resources.  
 
 ![Pipeline Overview](img/pipeline.png)
 
@@ -66,22 +66,22 @@ StreamingDataExtractOptions options = PipelineOptionsFactory.fromArgs(args)
     PCollection<String> p = pipeline.apply("ReadPubSub", PubsubIO.readStrings().fromSubscription(options.getPubsubSubscription()));
 ```    
 
-#####Here we create the pipeline and a data PCollection by reading from PubSub. The existing PubSub topic and subscription are passed in as application arguments. It will read data from an existing PubSub that streams our devices current readings.
+##### Here we create the pipeline and a data PCollection by reading from PubSub. The existing PubSub topic and subscription are passed in as application arguments. It will read data from an existing PubSub that streams our devices current readings.
  
-#####Since we are dealing with streaming data it is necessary to break it up into chunks so that it can be processed individually. Here our main input is windowed using fixed-time windows of one minute. 
+##### Since we are dealing with streaming data it is necessary to break it up into chunks so that it can be processed individually. Here our main input is windowed using fixed-time windows of one minute. 
 
 ```Java
 PCollection<String> p_windowed = p.apply(Window.<String>into(FixedWindows.of(Duration.standardMinutes(1))));
 ```
 
-#####Next we will transform our collection of sensor data into a collection of Telemetry objects.
+##### Next we will transform our collection of sensor data into a collection of Telemetry objects.
 
 ```Java
 
  PCollection<Telemetry> t = p_windowed.apply(ParDo.of(new ExtractDataFn()));
 
 ```
-#####Next we will transform our collection of Telemetry objects into a collection of TableRows that will be used to write the results to BigQuery.
+##### Next we will transform our collection of Telemetry objects into a collection of TableRows that will be used to write the results to BigQuery.
 
 ```Java
 PCollection<TableRow> results = t.apply(ParDo.of(new FormatTelemetryFn()));
@@ -90,11 +90,11 @@ PCollection<TableRow> results = t.apply(ParDo.of(new FormatTelemetryFn()));
 
 ##Analytics
 
-#####In less than an hour we have written 9,519 records.
+##### In less than an hour we have written 9,519 records.
 
 ![BigQuery Sensor Data](img/sensor_data.png)
 
-#####Using the following query we can easily run analytics over the captured data.  Here we are aggregating the sensor data.
+##### Using the following query we can easily run analytics over the captured data.  Here we are aggregating the sensor data.
 
 ```sql
 #standardSQL
@@ -118,13 +118,13 @@ FROM `relayr-pubsub.relayr.sensor_data`
 
 ![BigQuery Sensor Data Query](img/sensor_data_query.png)
 
-##Further Refinement
+## Further Refinement
 
-#####We can further enhance our Pipeline by reducing the collected data and writing the aggregated results to BigQuery. 
+##### We can further enhance our Pipeline by reducing the collected data and writing the aggregated results to BigQuery. 
 
 ![Aggregate](img/agg_1.png)
 
-####Windowing (Window Assignment)
+#### Windowing (Window Assignment)
 
 ```Java
 PCollection<String> p = pipeline.apply("ReadPubSub", PubsubIO.readStrings().fromSubscription(options.getPubsubSubscription()));
@@ -147,7 +147,7 @@ PCollection<KV<String, Long>> cntPerKey = mv.apply(Count.<String, Integer>perKey
 ```
 
 
-####Grouping Collections (Windowing Applied)
+#### Grouping Collections (Windowing Applied)
 
 
 ```Java
@@ -177,13 +177,13 @@ PCollection<TableRow> ar = aggResults.apply(ParDo.of(new FormatAggTelemetryFn())
     ar.apply(BigQueryIO.writeTableRows().to(aggTableRef).withSchema(FormatAggTelemetryFn.getSchema())); 
 ```
 
-##Analytics
+## Analytics
 
-#####Over the same time period, using further refinement, we have written only 153 records versus 9,519.
+##### Over the same time period, using further refinement, we have written only 153 records versus 9,519.
 
 ![BigQuery Sensor Data](img/agg_sensor_data.png)
 
-#####As before, using a similar query, we can see that by adding further aggregating transformations in our pipeline we can still get surprisingly similar results with fewer records.
+##### As before, using a similar query, we can see that by adding further aggregating transformations in our pipeline we can still get surprisingly similar results with fewer records.
 
 
 ```sql
@@ -211,7 +211,7 @@ FROM `relayr-pubsub.relayr.agg_sensor_data`
 
 
 
-##Conclusion
+## Conclusion
 
 While we are able to reduce our overall static data consumption we are still sending and processing that data on the cloud which can result in increased costs.
 
