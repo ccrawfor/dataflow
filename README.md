@@ -7,7 +7,7 @@
 
 ##### Leveraging [Google Cloud Platform (GCP)][7] and [relayr.io][8] we will highlight the impact that IoT sensor data can have and how we can create Pipelines to reduce the data.
 
-#####This example is broken down into the following steps.
+##### This example is broken down into the following steps.
 
 |     Step    |      Source                                |
 |:------------|:------------------------------------|
